@@ -133,11 +133,11 @@
         // this generic one.
         var carouselTitle = 'unknown_carousel';
 
-        if ($(this).closest( "h2" )) {
-          carouselTitle = $(this).closest( "h2" );
+        if ($(this).data('title')) {
+            carouselTitle = $(this).data('title');
         }
-        else if ($(this).parent().parent().siblings('.obb-carousel-active-tab > h3').length > 0) {
-          carouselTitle = $(this).parent().parent().siblings('.obb-carousel-active-tab > h3').html();
+        else if ($(this).closest( "h2" )) {
+          carouselTitle = $(this).closest( "h2" );
         }
 
         // Add tracking URL-pararmeters to items in the carousel.
