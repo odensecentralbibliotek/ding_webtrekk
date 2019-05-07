@@ -96,12 +96,12 @@ function ding_webtrekk_page_alter(&$page) {
   // search_data() function from core search module. Since this is not tied to
   // any path, we also check current_path().
   if (strpos(current_path(), 'search/ting') === 0) {
-    if ($search_result = ting_search_current_results()) {
+    if ($search_result = drupal_static('ting_search_results')) {
       $params += [
-        'OSS' => $search_result->getSearchRequest()->getFullTextQuery(),
-        'OSSr' => $search_result->getNumTotalObjects(),
+        'OSS' => $search_result->search_key,
+        'OSSr' => $search_result->numTotalObjects,
       ];
-
+/** Needs work for OC
       // Track filters used in the search request. They are called facets, since
       // for opensearch these will be search facet filters, selected by the user
       // in the UI.
@@ -110,21 +110,21 @@ function ding_webtrekk_page_alter(&$page) {
         foreach ($search_result->getSearchRequest()->getFilters() as $filter) {
           foreach ($filter->getStatements() as $statement) {
             $filters[] = $statement->getName() . ':' . $statement->getValue();
-          }
+        }
         }
         $params['p_s_Facets'] = implode(';', $filters);
       }
-
+*/
       // Track the page of the search result.
-      $params['p_s_Page'] = $search_result->getSearchRequest()->getPage();
+      $params['p_s_Page'] = pager_find_page();
 
       // Track the size of the search result. We already track the total size
       // of the search result in OSSr parameter, but this is the number of
       // results on the current search page.
-      $params['p_s_Size'] = $search_result->getNumCollections();
-
+      $params['p_s_Size'] = $search_result->numTotalCollections;
+/** Needs work for OC
       // Track the sort used in the search request.
-      if (!empty(ting_search_current_results()->getSearchRequest()->getSorts())) {
+      if (!empty($search_result->sort)) {
         $current_sort = $search_result->getSearchRequest()->getSorts()[0];
         $params['p_s_Sort'] = ting_search_sort_key_from_sort($current_sort);
       }
@@ -146,6 +146,8 @@ function ding_webtrekk_page_alter(&$page) {
           $params['p_OSSprofile'] = $profile->name;
         }
       }
+ * 
+ */
     }
   }
 
@@ -164,7 +166,7 @@ function ding_webtrekk_views_post_execute(&$view) {
   // For example, the view is also executed on ting_search search page to show
   // the number of results to the user, if they searched in content instead.
   // See search_backend.inc ctools content type plugin from ting_search.
-  if ($view->name == 'ding_multiple_search' && strpos(current_path(), 'search/node') === 0) {
+  if (strpos(current_path(), 'search/node') === 0) {
     // This view is loaded 2 times. Prevent from loading params multiple times.
     $loaded = &drupal_static(__FUNCTION__);
     if (!empty($loaded)) {
@@ -318,6 +320,54 @@ function ding_webtrekk_form_ding_loan_loans_form_alter(&$form, &$form_state) {
       }
     }
   }
+}
+
+/**
+ * Helper function to group loans by their due dates.
+ */
+function _ding_loan_loans_group_loans_by_date($loans) {
+  $groups = array();
+  $today = date('Y-m-d', REQUEST_TIME);
+
+  foreach ($loans as $loan) {
+    if ($loan->expiry < $today) {
+      // Loans that are overdue.
+      if (!isset($groups['overdue'])) {
+        $groups['overdue'] = array(
+          'title' => t('Loans overdue'),
+          'loans' => array(),
+        );
+      }
+      $groups['overdue']['loans'][$loan->id] = $loan;
+    }
+    elseif ($loan->expiry == $today) {
+      // Loans that should be handed in today.
+      if (!isset($groups['due'])) {
+        $groups['due'] = array(
+          'title' => t('Loans due today'),
+          'loans' => array(),
+        );
+      }
+      $groups['due']['loans'][$loan->id] = $loan;
+    }
+    else {
+      // Loans that are to be handed in in x days.
+      if (!isset($groups[$loan->expiry])) {
+        $time = strtotime($loan->expiry);
+        $due_in = t('Due in @count, @date', array(
+          '@count' => format_interval($time - strtotime("-1 Day"), 2),
+          '@date' => date('d/m/y', $time),
+        ));
+        $groups[$loan->expiry] = array(
+          'title' => $due_in,
+          'loans' => array(),
+        );
+      }
+      $groups[$loan->expiry]['loans'][$loan->id] = $loan;
+    }
+  }
+
+  return $groups;
 }
 
 /**
