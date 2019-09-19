@@ -131,25 +131,20 @@
         // We need a title to send as value in the 'u_navigatedby' parameter, so
         // if we can't find a carousel title we will just have to fallback to
         // this generic one.
-        var carouselTitle = 'unknown_carousel';
-
-        if ($(this).data('title')) {
-            carouselTitle = $(this).data('title');
-        }
-        else if ($(this).closest( "h2" )) {
-          carouselTitle = $(this).closest( "h2" );
-        }
-
+        var carouselTitle = 'unknown_carousel';        
+        carouselTitle = $('.obb-carousel-active-tab h3').text();
         // Add tracking URL-pararmeters to items in the carousel.
-        $('.carousel-inner a[href^="/ting/object/"]', this).once('js-ding-webtrekk', function() {
+        $('.carousel-inner a[href^="/ting/object/"]', this).once('js-ding-webtrekk', function() {                  
           $(this).attr('href', appendQueryParameter($(this).attr('href'), key, carouselTitle));
         });
 
-        $('.oc-carousel-control.prev', this).once('js-ding-webtrekk').click(function() {
+        $('.prev', this).once('js-ding-webtrekk').click(function() {
+            alert('prev');
           var linkId = 'Karousel, click på forrige knappen';
           var wtkId = DING_WEBTREKK_PARAMETER_CAROUSEL_PREV;
 
           if ($(this).hasClass('next')) {
+              alert('next');
             linkId = 'Karousel, click på næste knappen';
             wtkId = DING_WEBTREKK_PARAMETER_CAROUSEL_NEXT;
           }
