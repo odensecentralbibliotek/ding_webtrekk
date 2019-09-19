@@ -139,12 +139,10 @@
         });
 
         $('.prev', this).once('js-ding-webtrekk').click(function() {
-            alert('prev');
           var linkId = 'Karousel, click på forrige knappen';
           var wtkId = DING_WEBTREKK_PARAMETER_CAROUSEL_PREV;
 
           if ($(this).hasClass('next')) {
-              alert('next');
             linkId = 'Karousel, click på næste knappen';
             wtkId = DING_WEBTREKK_PARAMETER_CAROUSEL_NEXT;
           }
