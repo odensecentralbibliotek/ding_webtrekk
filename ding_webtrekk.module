@@ -150,7 +150,9 @@ function ding_webtrekk_page_alter(&$page) {
  */
     }
   }
-
+  if (strpos(current_path(), 'user/password') === 0) {
+    $params = [];
+  }
   if (!empty($params)) {
     ding_webtrekk_add_page_parameters($params);
   }
