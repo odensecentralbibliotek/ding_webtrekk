@@ -1,5 +1,4 @@
 <?php
-
 /**
  * @file
  * Administration form definition.
@@ -23,6 +22,12 @@ function ding_webtrekk_admin_settings_form() {
       '#description' => t('Enter your TagIntegration customer ID here.'),
       '#default_value' => variable_get('webtrekk_ti_id', ''),
     ];
+  $form['webtrekk_debug'] = [
+    '#type' => 'checkbox',
+    '#title' => t('Enable debug mode'),
+    '#description' => t('In debug mode all events and associated data are logged in the JavaScript console before they are send.'),
+    '#default_value' => variable_get('webtrekk_debug', FALSE),
+  ];
 
     return system_settings_form($form);
 }

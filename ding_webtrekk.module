@@ -1,5 +1,4 @@
 <?php
-
 /**
  * @file
  * Include basic hooks for the module functionality.
@@ -9,6 +8,8 @@
 define('DING_WEBTREKK_PARAMETER_RESERVE', 50);
 define('DING_WEBTREKK_PARAMETER_SEE_ONLINE', 51);
 define('DING_WEBTREKK_PARAMETER_RENEW_ALL', 56);
+define('DING_WEBTREKK_PARAMETER_CAMPAIGN_PLUS_TITLE', 62);
+define('DING_WEBTREKK_PARAMETER_CAMPAIGN_PLUS_ID', 63);
 
 /**
  * Implements hook_menu().
@@ -31,6 +32,7 @@ function ding_webtrekk_menu() {
  * Implements hook_page_alter().
  */
 function ding_webtrekk_page_alter(&$page) {
+  global $user;
   $domain = variable_get('webtrekk_ti_domain', '');
   $id = variable_get('webtrekk_ti_id', '');
 
@@ -146,8 +148,6 @@ function ding_webtrekk_page_alter(&$page) {
           $params['p_OSSprofile'] = $profile->name;
         }
       }
- * 
- */
     }
   }
   if (strpos(current_path(), 'user/password') === 0) {
@@ -261,6 +261,45 @@ function ding_webtrekk_ding_entity_view($entity, $view_mode) {
 }
 
 /**
+ * Implements hook_preprocess_node().
+ */
+function ding_webtrekk_preprocess_node(&$variables) {
+  $node = $variables['node'];
+  if ($node->type == 'ding_campaign_plus') {
+    // Create event that tracks when a campaign is viewed sending the title and
+    // internal ID.
+    $event_data = ding_webtrekk_create_event_data('Kampagne', [
+      DING_WEBTREKK_PARAMETER_CAMPAIGN_PLUS_TITLE => check_plain($node->title),
+      DING_WEBTREKK_PARAMETER_CAMPAIGN_PLUS_ID => $node->nid,
+    ]);
+
+    // We can't use the catch-all event handler for this, since it relies on
+    // being triggered by a user interaction. Instead we send event when
+    // behaviours are attached in frontend.
+    $event_data = json_encode($event_data);
+    $variables['attributes_array']['data-ding-webtrekk-event'] = $event_data;
+  }
+}
+
+/**
+ * Implements hook_process_node().
+ */
+function ding_webtrekk_process_node(&$variables) {
+  $node = $variables['node'];
+  if ($node->type == 'ding_campaign_plus') {
+    // Add u_navigatedby_kp URL-parameter to campaign URLs, to be able to track
+    // page views triggered from campaigns. We use a process for this because
+    // campaign plus adds the variable in preprocess.
+    $url = drupal_parse_url($variables['campaign_url']);
+    $url['query']['u_navigatedby_kp'] = check_plain($node->title);
+    $variables['campaign_url'] = url($url['path'], [
+      'query' => $url['query'],
+      'fragment' => $url['fragment'],
+    ]);
+  }
+}
+
+/**
  * Implements hook_form_FORM_ID_alter().
  */
 function ding_webtrekk_form_search_block_form_alter(&$form, &$form_state) {
@@ -292,8 +331,18 @@ function ding_webtrekk_form_ding_loan_loans_form_alter(&$form, &$form_state) {
   $material_ids = [];
   foreach ($loans as $loan) {
     if ($loan->renewable) {
-      $material_ids[$loan->id] = $loan->getEntity()->getId();
+      if (is_object($loan->entity)) {
+        $material_ids[$loan->id] = $loan->entity->getId();
     }
+      // For inter library loans the material may not reachable in the well and
+      // therefore we can't get a well ID to display. We'll note that it's an
+      // ILL and use the title instead.
+      else {
+        $material_ids[$loan->id] = t('Interlibrary Loan: %title', array(
+          '%title' => $loan->display_name,
+        ));
+    }
+  }
   }
 
   // The renew all button is straight forward. We can attach the event in
@@ -407,7 +456,7 @@ function ding_webtrekk_add_page_parameters(array $parameters = NULL) {
 }
 
 /**
- * Returns all the Webtrekk page parameteres collected during the request.
+ * Returns all the Webtrekk page parameters collected during the request.
  *
  * @see ding_webtrekk_preprocess_html()
  */
@@ -457,6 +506,15 @@ function ding_webtrekk_preprocess_html() {
   // Add script that tracks Webtrekk events in client and adds URL parameters
   // to elements which is problematic to handle on the server.
   drupal_add_js(drupal_get_path('module', 'ding_webtrekk') . '/ding_webtrekk.js', array(
-    'scope' => 'footer',
+    'scope' => 'footer',    
+    // Ensure we have a higher weight that EU cookie compliance script, since
+    // we use the hasAgreed() function from it.
+    'weight' => 1,
   ));
+
+  drupal_add_js([
+    'dingWebtrekk' => [
+      'debugMode' => variable_get('webtrekk_debug', FALSE),
+    ],
+  ], 'setting');
 }
