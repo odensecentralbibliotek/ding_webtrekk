@@ -124,7 +124,7 @@ function ding_webtrekk_page_alter(&$page) {
       // of the search result in OSSr parameter, but this is the number of
       // results on the current search page.
       $params['p_s_Size'] = $search_result->numTotalCollections;
-/** Needs work for OC
+      /** Needs work for OC
       // Track the sort used in the search request.
       if (!empty($search_result->sort)) {
         $current_sort = $search_result->getSearchRequest()->getSorts()[0];
@@ -157,7 +157,16 @@ function ding_webtrekk_page_alter(&$page) {
     ding_webtrekk_add_page_parameters($params);
   }
 }
-
+       **/
+    }
+  }
+  if (strpos(current_path(), 'user/password') === 0) {
+    $params = [];
+  }
+  if (!empty($params)) {
+    ding_webtrekk_add_page_parameters($params);
+  }
+}
 /**
  * Implements hook_views_post_execute().
  *
