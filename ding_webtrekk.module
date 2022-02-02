@@ -103,20 +103,19 @@ function ding_webtrekk_page_alter(&$page) {
         'OSS' => $search_result->search_key,
         'OSSr' => $search_result->numTotalObjects,
       ];
-/** Needs work for OC
+
       // Track filters used in the search request. They are called facets, since
       // for opensearch these will be search facet filters, selected by the user
       // in the UI.
-      if (!empty($search_result->getSearchRequest()->getFilters())) {
-        $filters = [];
-        foreach ($search_result->getSearchRequest()->getFilters() as $filter) {
-          foreach ($filter->getStatements() as $statement) {
-            $filters[] = $statement->getName() . ':' . $statement->getValue();
+      $filters = isset($_COOKIE['facets']) ? json_decode($_COOKIE['facets']) : array();
+      if (!empty($filters)) {
+        foreach ($filters as $key => $value) {
+          $val = explode(':', $value);
+          $indexes[$val[0]] = $val[1];
         }
-        }
-        $params['p_s_Facets'] = implode(';', $filters);
+        $params['p_s_Facets'] = implode(';', $indexes);
       }
-*/
+
       // Track the page of the search result.
       $params['p_s_Page'] = pager_find_page();
 
