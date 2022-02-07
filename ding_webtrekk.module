@@ -201,7 +201,7 @@ function ding_webtrekk_views_post_execute(&$view) {
 function ding_webtrekk_form_ding_reservation_reserve_form_alter(&$form, &$form_state, $form_id)
 {
   ding_webtrekk_attach_event(
-    $form['#attributes'],
+    $form['submit']['#attributes'],
     'Reserver',
     [DING_WEBTREKK_PARAMETER_RESERVE => $form['reservable']['#value']->entity->ding_entity_id]
   );
