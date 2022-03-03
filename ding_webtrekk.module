@@ -331,10 +331,12 @@ function ding_webtrekk_form_search_block_form_alter(&$form, &$form_state) {
 function ding_webtrekk_form_ding_loan_loans_form_alter(&$form, &$form_state) {
   // We'll only attach the renew events if there's loans that can be renewed.
   // Ding loan form checks this and only sets this element if that's the case.
+  // OC fix
+  /*
   if (!isset($form['actions_container']['select_all'])) {
     return;
   }
-
+*/
   // Ding loan stores the loans in the this form element and we take advantage
   // of that to get the material ids for the renewable loans.
   $loans = $form['items']['#value'];
@@ -357,16 +359,20 @@ function ding_webtrekk_form_ding_loan_loans_form_alter(&$form, &$form_state) {
 
   // The renew all button is straight forward. We can attach the event in
   // backend and just pass all renewable ids to the event data attribute.
+  // OC fix
+  /*
   ding_webtrekk_attach_event(
     $form['actions_container']['actions_top']['renew_all']['#attributes'],
     'Forny alle materialer',
     [DING_WEBTREKK_PARAMETER_RENEW_ALL => implode(';', $material_ids)]
   );
-
+*/
   // The renew selected button is more complicated, since we need data about
   // which materials the user has selected in the UI.
-  $renew_selected = &$form['actions_container']['actions_top']['submit_first'];
+  $renew_selected = &$form['actions']['submit'] ;
   $renew_selected['#attributes']['class'][] = 'js-ding-webtrekk-event-renew-selected';
+  // Oc fix
+  /*
   $groups = _ding_loan_loans_group_loans_by_date($loans);
   foreach ($groups as $gid => $group) {
     foreach ($form['loans'][$gid] as $key => &$material_item) {
@@ -381,6 +387,7 @@ function ding_webtrekk_form_ding_loan_loans_form_alter(&$form, &$form_state) {
       }
     }
   }
+  */
 }
 
 /**
