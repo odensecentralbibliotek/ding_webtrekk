@@ -33,6 +33,7 @@
       );
     }
     // Ensure that the Webtrekk object is defined before pushing event.
+    debugger;
     if (typeof wts !== 'undefined') {
       wts.push(['send', event, eventData]);
     }
@@ -44,6 +45,7 @@
   // TODO: Insert link to documentation when available. As of writing this is
   // very new stuff.
   var noCookieTracking = function noCookieTracking() {
+    debugger;
     if (typeof wts !== 'undefined') {
       wts.push(['setIdentifierOptOut']);
     }
